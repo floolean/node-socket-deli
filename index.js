@@ -123,9 +123,9 @@ WrappedSocket.prototype.writeMessage = WrappedSocket.prototype.writeJsonMessage;
 WrappedSocket.prototype.writeBinaryMessage = function(messageBuffer){
     var finalBuffer = new Buffer(HEADER_LENGTH + messageBuffer.length);
     HEADER_BUFFER.copy(finalBuffer,0, 0,HEADER_BUFFER_LENGTH);
-    finalBuffer.writeUIntLE(messageBuffer.length, HEADER_BUFFER_LENGTH, 6);
+    finalBuffer.writeUIntBE(messageBuffer.length, HEADER_BUFFER_LENGTH, 6);
     var checksum = (crc32(messageBuffer));
-    finalBuffer.writeUIntLE(checksum, HEADER_BUFFER_LENGTH + 6, 6);
+    finalBuffer.writeUIntBE(checksum, HEADER_BUFFER_LENGTH + 6, 6);
     messageBuffer.copy(finalBuffer, HEADER_LENGTH, 0, messageBuffer.length);
     this._netSocket.write(finalBuffer);
     debug('sent header:' + HEADER_LENGTH + ', size:' + messageBuffer.length + ', total size:' + finalBuffer.length + ', checksum:' + checksum);
@@ -144,7 +144,7 @@ function accumulateBuffer(data){
     this.socketBuffer = tmpBuffer;
     if (this.socketBuffer.length >= HEADER_LENGTH){
         if (this.socketBuffer.compare(HEADER_BUFFER,0,HEADER_BUFFER_LENGTH,0,HEADER_BUFFER_LENGTH)){ // got fibonacci header
-            var messageLen = this.socketBuffer.readUIntLE(HEADER_BUFFER_LENGTH, 6);
+            var messageLen = this.socketBuffer.readUIntBE(HEADER_BUFFER_LENGTH, 6);
             if (messageLen > 0x3fffffff){
                 var err = 'message length exceeded the allowed size, max allowed:' + parseInt(0x3fffffff) + ', got:' + messageLen;
                 debug(err);
@@ -154,7 +154,7 @@ function accumulateBuffer(data){
             }
             if (this.socketBuffer.length >= (HEADER_LENGTH + messageLen)){
 
-                var messageCrc32 = this.socketBuffer.readUIntLE(HEADER_BUFFER_LENGTH + 6, 6);
+                var messageCrc32 = this.socketBuffer.readUIntBE(HEADER_BUFFER_LENGTH + 6, 6);
                 var messageBuffer = new Buffer(messageLen);
                 this.socketBuffer.copy(messageBuffer, 0, HEADER_LENGTH, HEADER_LENGTH + messageLen);
                 var checksum = crc32(messageBuffer);
