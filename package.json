@@ -1,0 +1,32 @@
+{
+  "name": "socket-deli",
+  "version": "1.0.0",
+  "description": "A wrapper around net socket that adds delimiter, size and crc32 check",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/floolean/node-socket-deli.git"
+  },
+  "keywords": [
+    "socket",
+    "tcp",
+    "message",
+    "delimiter"
+  ],
+  "author": {
+    "name": "floolean"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/floolean/node-socket-deli/issues"
+  },
+  "homepage": "https://github.com/floolean/node-socket-deli#readme",
+  "readme": "ERROR: No README data found!",
+  "_id": "socket-deli@1.0.0",
+  "_shasum": "c593bce68eca790b65a4463d9f45dd1304d7b181",
+  "_from": "..\\..\\..\\..\\..\\..\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\socket-deli",
+  "_resolved": "file:..\\..\\..\\..\\..\\..\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\socket-deli"
+}
