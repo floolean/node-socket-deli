@@ -128,20 +128,32 @@ WrappedSocket.prototype.writeBinaryMessage = function(messageBuffer){
     finalBuffer.writeUIntLE(checksum, HEADER_BUFFER_LENGTH + 6, 6);
     messageBuffer.copy(finalBuffer, HEADER_LENGTH, 0, messageBuffer.length);
     this._netSocket.write(finalBuffer);
-    debug('SEND:' + finalBuffer);
+    debug('sent header:' + HEADER_LENGTH + ', size:' + messageBuffer.length + ', total size:' + finalBuffer.length + ', checksum:' + checksum);
 }
 
 function accumulateBuffer(data){
+
     if (typeof this.socketBuffer === 'undefined')
         this.socketBuffer = new Buffer(0);
     var accumulatedLen = this.socketBuffer.length;
     var recvedThisTimeLen = Buffer.byteLength(data);
     var currentLength = accumulatedLen + recvedThisTimeLen;
-    this.socketBuffer = Buffer.concat([this.socketBuffer, data]);
+    var tmpBuffer = new Buffer(currentLength);
+    this.socketBuffer.copy(tmpBuffer);
+    data.copy(tmpBuffer, accumulatedLen, 0, data.length);
+    this.socketBuffer = tmpBuffer;
     if (this.socketBuffer.length >= HEADER_LENGTH){
         if (this.socketBuffer.compare(HEADER_BUFFER,0,HEADER_BUFFER_LENGTH,0,HEADER_BUFFER_LENGTH)){ // got fibonacci header
             var messageLen = this.socketBuffer.readUIntLE(HEADER_BUFFER_LENGTH, 6);
-            if (currentLength => messageLen){
+            if (messageLen > 0x3fffffff){
+                var err = 'message length exceeded the allowed size, max allowed:' + parseInt(0x3fffffff) + ', got:' + messageLen;
+                debug(err);
+                this.emit('error', err);
+                delete this.socketBuffer;
+                return;
+            }
+            if (this.socketBuffer.length >= (HEADER_LENGTH + messageLen)){
+
                 var messageCrc32 = this.socketBuffer.readUIntLE(HEADER_BUFFER_LENGTH + 6, 6);
                 var messageBuffer = new Buffer(messageLen);
                 this.socketBuffer.copy(messageBuffer, 0, HEADER_LENGTH, HEADER_LENGTH + messageLen);
@@ -150,11 +162,19 @@ function accumulateBuffer(data){
                     debug('RECV:' + messageBuffer);
                     this.emit('message', messageBuffer);
                 }
-                this.socketBuffer = this.socketBuffer.slice(HEADER_LENGTH + messageLen, this.socketBuffer.length);
+                else
+                {
+                    this.emit('error','Erroneus message checksum, expected:' + messageCrc32 + ' got:' + checksum);
+                }
+                
+                tmpBuffer = new Buffer(currentLength - HEADER_LENGTH - messageLen);
+                this.socketBuffer.copy(tmpBuffer, 0, HEADER_LENGTH + messageLen, currentLength);
+                this.socketBuffer = tmpBuffer;
+                
             }
         }
         else // we dont have a valid header, so discard the buffer
-            this.socketBuffer = new Buffer(0);
+            delete this.socketBuffer;
     }
 }
 
